@@ -1,0 +1,6 @@
+# Intellij config
+*.iml
+.idea/
+
+# Java generated
+*.class
