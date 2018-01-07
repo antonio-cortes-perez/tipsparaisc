@@ -4,3 +4,6 @@
 
 # Java generated
 *.class
+
+# C++ generated
+*.out
