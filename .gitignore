@@ -7,3 +7,9 @@
 
 # C++ generated
 *.out
+**/bin/
+**/obj/
+
+# Code::blocks files.
+*.cbp
+*.layout
