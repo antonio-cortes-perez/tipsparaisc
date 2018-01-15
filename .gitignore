@@ -10,6 +10,6 @@
 **/bin/
 **/obj/
 
-# Code::blocks files.
+# Code::Blocks files.
 *.cbp
 *.layout
