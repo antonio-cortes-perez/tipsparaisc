@@ -20,7 +20,7 @@ import java.io.*;
  * @author Mariana
  * @version 31/Diciembre/2010
  */
-public class MezclaNatural {
+public class MezclaNaturalGenerico {
 
   InputStreamReader ISR = new InputStreamReader(System.in);
   BufferedReader BR = new BufferedReader(ISR);
