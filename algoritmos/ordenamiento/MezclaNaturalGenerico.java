@@ -14,65 +14,36 @@
  *
  */
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
- * @author Mariana
- * @version 31/Diciembre/2010
+ * https://tipsparaisc.blogspot.com/2010/12/ordenamiento-externo-mezcla-natural.html
  */
-public class MezclaNaturalGenerico {
+public class MezclaNaturalGenerico<T extends Comparable<T>> {
+  public interface Lector<T> extends Iterator<T>, Closeable { }
+  public interface Escritor<T> extends Consumer<T>, Closeable { }
 
-  InputStreamReader ISR = new InputStreamReader(System.in);
-  BufferedReader BR = new BufferedReader(ISR);
-
-  public void crearArchivoDatos(String nombreArchivo) throws Exception {
-
-    String nombre = null;
-
-    //Declaración del objeto asociado a la creación o apertura de un archivo
-    DataOutputStream dos = null;
-
-    //El siguiente código abre o crea un archivo
-    try {
-      dos = new DataOutputStream(new FileOutputStream(nombreArchivo, false));
-    } catch (IOException e) {
-      System.out.println("Error de Apertura o Creacion");
-    }
-
-    //El siguiente bloque escribe un registro en el archivo abierto o creado
-    try {
-      do {
-        System.out.println("Nombre: [Solo presiona Enter para terminar de capturar nombres]");
-        nombre = BR.readLine();
-        if (!nombre.equalsIgnoreCase("")) {
-          dos.writeUTF(nombre);
-        }
-
-      } while (!nombre.equalsIgnoreCase(""));
-    } catch (IOException e) {
-      System.out.println("Error de escritura");
-    } finally {
-      dos.close();
-    }
-  }
+  private final Function<String, Lector<T>> generaLector;
+  private final Function<String, Escritor<T>> generaEscritor;
 
   //Metodo para desplegar el contenido del archivo que se creó o se abrió en las líneas anteriores
   public void desplegar(String nombreArchivo) throws Exception {
-    String nombre = null;
-
-    DataInputStream dis = null;
+    Lector<T> dis = null;
     int index = 0;
-    //DataOutputStream dos = null;
     try {
-      dis = new DataInputStream(new FileInputStream(nombreArchivo));
-      while (dis.available() != 0) {
-        nombre = dis.readUTF();
-        System.out.println(++index + ") " + nombre);
+      dis = generaLector.apply(nombreArchivo);
+      while (dis.hasNext()) {
+        System.out.println(++index + ") " + dis.next());
       }
-    } catch (FileNotFoundException e) {
-      System.out.println("Error de Apertura-Lectura archivo: " + nombreArchivo);
-    } catch (IOException e) {
-      System.out.println("Error de lectura archivo: " + nombreArchivo);
     } finally {
       if (dis != null) {
         dis.close();
@@ -82,24 +53,23 @@ public class MezclaNaturalGenerico {
 
   //Metodo para verificar el correcto orden en el archivo
   public void verificarOrdenamiento(String nombreArchivo) throws IOException {
-    String actual = null;
-    String anterior = null;
+    T actual = null;
+    T anterior = null;
 
     //Variable booleana para indicar el estado del archivo
     boolean estaOrdenado = true;
 
-    DataInputStream dis = null;
-    //DataOutputStream dos = null;
+    Lector<T> dis = null;
     try {
-      dis = new DataInputStream(new FileInputStream(nombreArchivo));
+      dis = generaLector.apply(nombreArchivo);
 
       //Ciclo para verificar el orden del archivo
       //Comenzar siempre por averiguar si hay datos dentro del archivo
-      while (dis.available() != 0) {
+      while (dis.hasNext()) {
         //En un primer momento los indices quedan a la par
         anterior = actual;
         //actual se encargara de ir "jalando" a anterior
-        actual = dis.readUTF();
+        actual = dis.next();
 
         //En la segunda vuelta, el indice anterior ocupa la posicion
         //del indice actual y a partir de aqui, el indice actual
@@ -107,8 +77,6 @@ public class MezclaNaturalGenerico {
         if (anterior == null) {
           anterior = actual;
         }
-
-        System.out.println(actual);
 
         //Comparacion de los datos contenidos en actual y anterior
         //Condicion: Si el dato anterior es lexicograficamente mayor al actual
@@ -126,10 +94,6 @@ public class MezclaNaturalGenerico {
         System.out.println("EL ARCHIVO ESTA ORDENADO");
       }
 
-    } catch (FileNotFoundException e) {
-      System.out.println("Error de Apertura-Lectura archivo: " + nombreArchivo);
-    } catch (IOException e) {
-      System.out.println("Error de lectura archivo: " + nombreArchivo);
     } finally {
       //Verificar siempre que el archivo este abierto antes de intentar cerrarlo
       if (dis != null) {
@@ -140,12 +104,12 @@ public class MezclaNaturalGenerico {
   }
 
   //Metodo para generar particiones de secuencias
-  public boolean particion(String nombreArchivo, String archivo1, String archivo2) {
+  private boolean particion(String nombreArchivo, String archivo1, String archivo2) {
 
     //Se utilizara una logica similar a la del metodo de verificar orden
     //por lo que los indices son declarados de la misma manera
-    String actual = null;
-    String anterior = null;
+    T actual = null;
+    T anterior = null;
 
     //Variable para controlar el indice del archivo al cual se va a escribir.
     //El archivo en cuestion es declarado dentro de un arreglo de archivos
@@ -156,21 +120,22 @@ public class MezclaNaturalGenerico {
 
     //Declaracion de los objetos asociados a los archivos y del arreglo de archivos
     //que sirven para las particiones
-    DataOutputStream dos[] = new DataOutputStream[2];
-    DataInputStream dis = null;
+    @SuppressWarnings("unchecked")
+    Escritor<T> dos[] = new Escritor[2];
+    Lector<T> dis = null;
 
     try {
       //Abre o crea los archivos
-      dos[0] = new DataOutputStream(new FileOutputStream(archivo1, false));
-      dos[1] = new DataOutputStream(new FileOutputStream(archivo2, false));
-      dis = new DataInputStream(new FileInputStream(nombreArchivo));
+      dos[0] = generaEscritor.apply(archivo1);
+      dos[1] = generaEscritor.apply(archivo2);
+      dis = generaLector.apply(nombreArchivo);
 
       //Primero, verifica si existen datos en el archivo que se va a leer
-      while (dis.available() != 0) {
+      while (dis.hasNext()) {
         //Utiliza la misma logica para las variables que almacenan los datos
         //que en el metodo de la verificacion del orden
         anterior = actual;
-        actual = dis.readUTF();
+        actual = dis.next();
 
         if (anterior == null) {
           anterior = actual;
@@ -186,12 +151,8 @@ public class MezclaNaturalGenerico {
 
         //Imprimir el dato contenido en actual y escribirlo en el archivo correspondiente
         //System.out.println(indexOutputStream + ") "+ actual);
-        dos[indexOutputStream].writeUTF(actual);
+        dos[indexOutputStream].accept(actual);
       }
-    } catch (FileNotFoundException e) {
-      System.out.println("Error lectura/escritura");
-    } catch (IOException e) {
-      System.out.println("Error en la creacion o apertura del archivo 1");
     } finally {
       //Verificar para cada archivo, que efectivamente se encuentre abierto
       //antes de cerrarlo
@@ -216,52 +177,55 @@ public class MezclaNaturalGenerico {
   }
 
   //Metodo de fusion de los datos obtenidos en el metodo de particion
-  public void fusion(String nombreArchivo, String archivo1, String archivo2) {
+  private void fusion(String nombreArchivo, String archivo1, String archivo2) {
     //Variables para almacenar los datos de los archivos
     //que contienen las particiones
-    String[] actual = new String[2];
-    String[] anterior = new String[2];
+    List<T> actual = Arrays.asList(null, null);
+    List<T> anterior = Arrays.asList(null, null);
     boolean[] finArchivo = new boolean[2];
     int indexArchivo = 0;
 
     //Creacion de los objetos asociacos a los archivos
-    DataOutputStream dos = null;
-    DataInputStream dis[] = new DataInputStream[2];
+    Escritor<T> dos = null;
+    @SuppressWarnings("unchecked")
+    Lector<T> dis[] = new Lector[2];
 
     try {
       //Abre o crea los archivos
-      dis[0] = new DataInputStream(new FileInputStream(archivo1));
-      dis[1] = new DataInputStream(new FileInputStream(archivo2));
-      dos = new DataOutputStream(new FileOutputStream(nombreArchivo, false));
+      dis[0] = generaLector.apply(archivo1);
+      dis[1] = generaLector.apply(archivo2);
+      dos = generaEscritor.apply(nombreArchivo);
 
       //Condicion principal: debe haber datos en ambos archivos de lectura
       //Es importante notar que al inicio siempre hay al menos un dato en
       //cada archivo, de otra forma el metodo de particion hubiera
       //generado una sola secuencia y no entrariamos a la fusion.
-      while (dis[0].available() != 0 && dis[1].available() != 0) {
+      while (dis[0].hasNext() && dis[1].hasNext()) {
 
         // 1era vez: inicializar con la primera palabra de cada archivo
-        if (anterior[0] == null && anterior[1] == null) {
-          anterior[0] = actual[0] = dis[0].readUTF();
-          anterior[1] = actual[1] = dis[1].readUTF();
+        if (anterior.get(0) == null && anterior.get(1) == null) {
+          actual.set(0, dis[0].next());
+          anterior.set(0, actual.get(0));
+          actual.set(1, dis[1].next());
+          anterior.set(1, actual.get(1));
         }
 
         // al inicio del procesamiento de dos secuencias, anterior y
         // actual apuntan a la primer palabra de cada secuencia.
-        anterior[0] = actual[0];
-        anterior[1] = actual[1];
+        anterior.set(0, actual.get(0));
+        anterior.set(1, actual.get(1));
 
         // mezclamos las dos secuencias hasta que una acaba
-        while (anterior[0].compareTo(actual[0]) <= 0 &&
-            anterior[1].compareTo(actual[1]) <= 0) {
-          indexArchivo = (actual[0].compareTo(actual[1]) <= 0) ? 0 : 1;
-          dos.writeUTF(actual[indexArchivo]);
-          anterior[indexArchivo] = actual[indexArchivo];
+        while (anterior.get(0).compareTo(actual.get(0)) <= 0 &&
+            anterior.get(1).compareTo(actual.get(1)) <= 0) {
+          indexArchivo = (actual.get(0).compareTo(actual.get(1)) <= 0) ? 0 : 1;
+          dos.accept(actual.get(indexArchivo));
+          anterior.set(indexArchivo, actual.get(indexArchivo));
 
           // salir del while cuando no haya datos, pero ya procesamos
           // el ultimo nombre del archivo
-          if (dis[indexArchivo].available() != 0) {
-            actual[indexArchivo] = dis[indexArchivo].readUTF();
+          if (dis[indexArchivo].hasNext()) {
+            actual.set(indexArchivo, dis[indexArchivo].next());
           } else {
             finArchivo[indexArchivo] = true;
             break;
@@ -273,11 +237,11 @@ public class MezclaNaturalGenerico {
         // que purgar el otro archivo
         indexArchivo = indexArchivo == 0 ? 1 : 0;
 
-        while (anterior[indexArchivo].compareTo(actual[indexArchivo]) <= 0) {
-          dos.writeUTF(actual[indexArchivo]);
-          anterior[indexArchivo] = actual[indexArchivo];
-          if (dis[indexArchivo].available() != 0) {
-            actual[indexArchivo] = dis[indexArchivo].readUTF();
+        while (anterior.get(indexArchivo).compareTo(actual.get(indexArchivo)) <= 0) {
+          dos.accept(actual.get(indexArchivo));
+          anterior.set(indexArchivo, actual.get(indexArchivo));
+          if (dis[indexArchivo].hasNext()) {
+            actual.set(indexArchivo, dis[indexArchivo].next());
           } else {
             finArchivo[indexArchivo] = true;
             break;
@@ -291,22 +255,18 @@ public class MezclaNaturalGenerico {
       // debio terminar, por lo que a lo mas uno de los dos whiles
       // siguientes se ejecutara
       if (!finArchivo[0]) {
-        dos.writeUTF(actual[0]);
-        while (dis[0].available() != 0) {
-          dos.writeUTF(dis[0].readUTF());
+        dos.accept(actual.get(0));
+        while (dis[0].hasNext()) {
+          dos.accept(dis[0].next());
         }
       }
 
       if (!finArchivo[1]) {
-        dos.writeUTF(actual[1]);
-        while (dis[1].available() != 0) {
-          dos.writeUTF(dis[1].readUTF());
+        dos.accept(actual.get(1));
+        while (dis[1].hasNext()) {
+          dos.accept(dis[1].next());
         }
       }
-    } catch (FileNotFoundException e) {
-      System.err.println(e);
-    } catch (IOException e) {
-      System.err.println(e);
     } finally {
       //Verificar para cada archivo, que efectivamente se encuentre abierto
       //antes de cerrarlo
@@ -328,41 +288,26 @@ public class MezclaNaturalGenerico {
     }
   }
 
-  public void ordenar(String nombreArchivo) {
+  // Ordena el archivo de entrada y lo guarda en salida.
+  public void ordenar(String entrada, String salida) throws IOException {
     /*No es recomendable utilizar nombres fijos para los archivos,
      *pues se podria sobreescribir accidentalmente otro archivo con
      *el mismo nombre, sin embargo, para fines de este proyecto
      *se utilizaron nombres fijos
      */
     int index = 0;
-    while (particion(nombreArchivo, "archivo1.txt", "archivo2.txt")) {
+    Files.copy(Paths.get(entrada), Paths.get(salida), StandardCopyOption.REPLACE_EXISTING);
+    while (particion(salida, "archivo1.txt", "archivo2.txt")) {
       //Imprime el numero de particiones-fusiones que le llevo a los
       //metodos de particion y fusion el ordenar el archivo
       System.out.println("Fusion " + ++index);
-      fusion(nombreArchivo, "archivo1.txt", "archivo2.txt");
+      fusion(salida, "archivo1.txt", "archivo2.txt");
     }
   }
 
-  public static void main(String[] args) throws Exception {
-    InputStreamReader isr = new InputStreamReader(System.in);
-    BufferedReader br = new BufferedReader(isr);
-
-    String nombreArchivo = null;
-
-    MezclaNatural mezcla1 = new MezclaNatural();
-
-    //Solicita el nombre de un archivo para poder ordenarlo
-    System.out.println("Nombre del archivo:");
-    nombreArchivo = br.readLine();
-
-    //Despliega el contenido del archivo sin ordenar
-    mezcla1.desplegar(nombreArchivo);
-
-    //Ordena el contenido del archivo
-    mezcla1.ordenar(nombreArchivo);
-
-    //Verifica que el archivo este ordenado correctamente
-    mezcla1.verificarOrdenamiento(nombreArchivo);
-
+  public MezclaNaturalGenerico(Function<String, Lector<T>> generaLector,
+      Function<String, Escritor<T>> generaEscritor) {
+    this.generaLector = generaLector;
+    this.generaEscritor = generaEscritor;
   }
 }
