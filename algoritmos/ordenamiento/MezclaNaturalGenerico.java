@@ -16,9 +16,6 @@
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -32,37 +29,28 @@ public class MezclaNaturalGenerico<T extends Comparable<T>> {
   public interface Lector<T> extends Iterator<T>, Closeable { }
   public interface Escritor<T> extends Consumer<T>, Closeable { }
 
-  private final Function<String, Lector<T>> generaLector;
-  private final Function<String, Escritor<T>> generaEscritor;
+  private final Function<Object, Lector<T>> generaLector;
+  private final Function<Object, Escritor<T>> generaEscritor;
 
-  //Metodo para desplegar el contenido del archivo que se creó o se abrió en las líneas anteriores
-  public void desplegar(String nombreArchivo) throws Exception {
-    Lector<T> dis = null;
+  // Metodo para desplegar el contenido.
+  public void desplegar(Object entrada) throws Exception {
     int index = 0;
-    try {
-      dis = generaLector.apply(nombreArchivo);
+    try(Lector<T> dis = generaLector.apply(entrada)) {
       while (dis.hasNext()) {
         System.out.println(++index + ") " + dis.next());
-      }
-    } finally {
-      if (dis != null) {
-        dis.close();
       }
     }
   }
 
-  //Metodo para verificar el correcto orden en el archivo
-  public void verificarOrdenamiento(String nombreArchivo) throws IOException {
+  // Metodo para verificar el ordenamiento.
+  public void verificarOrdenamiento(Object entrada) throws IOException {
     T actual = null;
     T anterior = null;
 
     //Variable booleana para indicar el estado del archivo
     boolean estaOrdenado = true;
 
-    Lector<T> dis = null;
-    try {
-      dis = generaLector.apply(nombreArchivo);
-
+    try(Lector<T> dis = generaLector.apply(entrada)) {
       //Ciclo para verificar el orden del archivo
       //Comenzar siempre por averiguar si hay datos dentro del archivo
       while (dis.hasNext()) {
@@ -94,17 +82,11 @@ public class MezclaNaturalGenerico<T extends Comparable<T>> {
         System.out.println("EL ARCHIVO ESTA ORDENADO");
       }
 
-    } finally {
-      //Verificar siempre que el archivo este abierto antes de intentar cerrarlo
-      if (dis != null) {
-        dis.close();
-      }
-
     }
   }
 
   //Metodo para generar particiones de secuencias
-  private boolean particion(String nombreArchivo, String archivo1, String archivo2) {
+  private boolean particion(Object entrada, Object temp1, Object temp2) {
 
     //Se utilizara una logica similar a la del metodo de verificar orden
     //por lo que los indices son declarados de la misma manera
@@ -126,9 +108,9 @@ public class MezclaNaturalGenerico<T extends Comparable<T>> {
 
     try {
       //Abre o crea los archivos
-      dos[0] = generaEscritor.apply(archivo1);
-      dos[1] = generaEscritor.apply(archivo2);
-      dis = generaLector.apply(nombreArchivo);
+      dos[0] = generaEscritor.apply(temp1);
+      dos[1] = generaEscritor.apply(temp2);
+      dis = generaLector.apply(entrada);
 
       //Primero, verifica si existen datos en el archivo que se va a leer
       while (dis.hasNext()) {
@@ -177,7 +159,7 @@ public class MezclaNaturalGenerico<T extends Comparable<T>> {
   }
 
   //Metodo de fusion de los datos obtenidos en el metodo de particion
-  private void fusion(String nombreArchivo, String archivo1, String archivo2) {
+  private void fusion(Object salida, Object temp1, Object temp2) {
     //Variables para almacenar los datos de los archivos
     //que contienen las particiones
     List<T> actual = Arrays.asList(null, null);
@@ -192,9 +174,9 @@ public class MezclaNaturalGenerico<T extends Comparable<T>> {
 
     try {
       //Abre o crea los archivos
-      dis[0] = generaLector.apply(archivo1);
-      dis[1] = generaLector.apply(archivo2);
-      dos = generaEscritor.apply(nombreArchivo);
+      dis[0] = generaLector.apply(temp1);
+      dis[1] = generaLector.apply(temp2);
+      dos = generaEscritor.apply(salida);
 
       //Condicion principal: debe haber datos en ambos archivos de lectura
       //Es importante notar que al inicio siempre hay al menos un dato en
@@ -288,25 +270,20 @@ public class MezclaNaturalGenerico<T extends Comparable<T>> {
     }
   }
 
-  // Ordena el archivo de entrada y lo guarda en salida.
-  public void ordenar(String entrada, String salida) throws IOException {
-    /*No es recomendable utilizar nombres fijos para los archivos,
-     *pues se podria sobreescribir accidentalmente otro archivo con
-     *el mismo nombre, sin embargo, para fines de este proyecto
-     *se utilizaron nombres fijos
-     */
+  /** Ordena entrada usando temp1 and temp2 como almacenamiento auxiliar. */
+  public void ordenar(Object entrada, Object temp1, Object temp2) {
     int index = 0;
-    Files.copy(Paths.get(entrada), Paths.get(salida), StandardCopyOption.REPLACE_EXISTING);
-    while (particion(salida, "archivo1.txt", "archivo2.txt")) {
-      //Imprime el numero de particiones-fusiones que le llevo a los
-      //metodos de particion y fusion el ordenar el archivo
+    while (particion(entrada, temp1, temp2)) {
+      // Imprime el numero de particiones-fusiones que le llevo a los
+      // metodos de particion y fusion el ordenar el archivo
       System.out.println("Fusion " + ++index);
-      fusion(salida, "archivo1.txt", "archivo2.txt");
+      fusion(entrada, temp1, temp2);
     }
   }
 
-  public MezclaNaturalGenerico(Function<String, Lector<T>> generaLector,
-      Function<String, Escritor<T>> generaEscritor) {
+  public MezclaNaturalGenerico(
+      Function<Object, Lector<T>> generaLector,
+      Function<Object, Escritor<T>> generaEscritor) {
     this.generaLector = generaLector;
     this.generaEscritor = generaEscritor;
   }

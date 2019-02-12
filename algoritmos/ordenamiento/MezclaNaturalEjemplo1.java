@@ -17,6 +17,7 @@
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -25,11 +26,12 @@ import java.io.IOException;
 public class MezclaNaturalEjemplo1 {
 
   public static class Lector implements MezclaNaturalGenerico.Lector<String> {
+
     private final DataInputStream dis;
 
-    public Lector(String archivo) {
+    public Lector(Object archivo) {
       try {
-        dis = new DataInputStream(new FileInputStream(archivo));
+        dis = new DataInputStream(new FileInputStream((File) archivo));
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -60,11 +62,12 @@ public class MezclaNaturalEjemplo1 {
   }
 
   public static class Escritor implements MezclaNaturalGenerico.Escritor<String> {
+
     private final DataOutputStream dos;
 
-    public Escritor(String archivo) {
+    public Escritor(Object archivo) {
       try {
-        dos = new DataOutputStream(new FileOutputStream(archivo));
+        dos = new DataOutputStream(new FileOutputStream((File) archivo));
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -95,15 +98,18 @@ public class MezclaNaturalEjemplo1 {
   }
 
   public static void main(String[] args) throws Exception {
-    String txt = "nombres.txt";
-    String bin = "nombres.bin";
-    String binOrdenado = "nombres.bin.ord";
-    crearArchivoBinario(txt, bin);
-
-    MezclaNaturalGenerico<String> ordernamiento = new MezclaNaturalGenerico<>(Lector::new, Escritor::new);
-    ordernamiento.verificarOrdenamiento(bin);
-    ordernamiento.ordenar(bin, binOrdenado);
-    ordernamiento.verificarOrdenamiento(binOrdenado);
+    crearArchivoBinario("nombres.txt", "nombres.utf");
+    MezclaNaturalGenerico<String> ordernamiento =
+        new MezclaNaturalGenerico<>(Lector::new, Escritor::new);
+    File entrada = new File("nombres.utf");
+    File temp1 = File.createTempFile("MezclaNatual", "temp");
+    File temp2 = File.createTempFile("MezclaNatual", "temp");
+    ordernamiento.verificarOrdenamiento(entrada);
+    ordernamiento.ordenar(entrada, temp1, temp2);
+    ordernamiento.verificarOrdenamiento(entrada);
+    temp1.delete();
+    temp2.delete();
+    ordernamiento.desplegar(entrada);
   }
 
 }
