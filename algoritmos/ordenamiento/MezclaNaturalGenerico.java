@@ -15,6 +15,7 @@
  */
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -29,11 +30,11 @@ public class MezclaNaturalGenerico<T extends Comparable<T>> {
   public interface Lector<T> extends Iterator<T>, Closeable { }
   public interface Escritor<T> extends Consumer<T>, Closeable { }
 
-  private final Function<Object, Lector<T>> generaLector;
-  private final Function<Object, Escritor<T>> generaEscritor;
+  private final Function<File, Lector<T>> generaLector;
+  private final Function<File, Escritor<T>> generaEscritor;
 
   // Metodo para desplegar el contenido.
-  public void desplegar(Object entrada) throws Exception {
+  public void desplegar(File entrada) throws Exception {
     int index = 0;
     try(Lector<T> dis = generaLector.apply(entrada)) {
       while (dis.hasNext()) {
@@ -43,7 +44,7 @@ public class MezclaNaturalGenerico<T extends Comparable<T>> {
   }
 
   // Metodo para verificar el ordenamiento.
-  public void verificarOrdenamiento(Object entrada) throws IOException {
+  public void verificarOrdenamiento(File entrada) throws IOException {
     T actual = null;
     T anterior = null;
 
@@ -86,7 +87,7 @@ public class MezclaNaturalGenerico<T extends Comparable<T>> {
   }
 
   //Metodo para generar particiones de secuencias
-  private boolean particion(Object entrada, Object temp1, Object temp2) {
+  private boolean particion(File entrada, File temp1, File temp2) {
 
     //Se utilizara una logica similar a la del metodo de verificar orden
     //por lo que los indices son declarados de la misma manera
@@ -159,7 +160,7 @@ public class MezclaNaturalGenerico<T extends Comparable<T>> {
   }
 
   //Metodo de fusion de los datos obtenidos en el metodo de particion
-  private void fusion(Object salida, Object temp1, Object temp2) {
+  private void fusion(File salida, File temp1, File temp2) {
     //Variables para almacenar los datos de los archivos
     //que contienen las particiones
     List<T> actual = Arrays.asList(null, null);
@@ -271,7 +272,7 @@ public class MezclaNaturalGenerico<T extends Comparable<T>> {
   }
 
   /** Ordena entrada usando temp1 and temp2 como almacenamiento auxiliar. */
-  public void ordenar(Object entrada, Object temp1, Object temp2) {
+  public void ordenar(File entrada, File temp1, File temp2) {
     int index = 0;
     while (particion(entrada, temp1, temp2)) {
       // Imprime el numero de particiones-fusiones que le llevo a los
@@ -282,8 +283,8 @@ public class MezclaNaturalGenerico<T extends Comparable<T>> {
   }
 
   public MezclaNaturalGenerico(
-      Function<Object, Lector<T>> generaLector,
-      Function<Object, Escritor<T>> generaEscritor) {
+      Function<File, Lector<T>> generaLector,
+      Function<File, Escritor<T>> generaEscritor) {
     this.generaLector = generaLector;
     this.generaEscritor = generaEscritor;
   }

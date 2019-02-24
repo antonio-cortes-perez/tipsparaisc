@@ -29,9 +29,9 @@ public class MezclaNaturalEjemplo1 {
 
     private final DataInputStream dis;
 
-    public Lector(Object archivo) {
+    public Lector(File archivo) {
       try {
-        dis = new DataInputStream(new FileInputStream((File) archivo));
+        dis = new DataInputStream(new FileInputStream(archivo));
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -65,9 +65,9 @@ public class MezclaNaturalEjemplo1 {
 
     private final DataOutputStream dos;
 
-    public Escritor(Object archivo) {
+    public Escritor(File archivo) {
       try {
-        dos = new DataOutputStream(new FileOutputStream((File) archivo));
+        dos = new DataOutputStream(new FileOutputStream(archivo));
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
