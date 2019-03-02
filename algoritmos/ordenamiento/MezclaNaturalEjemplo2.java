@@ -98,12 +98,8 @@ public class MezclaNaturalEjemplo2 {
     MezclaNaturalGenerico<String> ordernamiento =
         new MezclaNaturalGenerico<>(Lector::new, Escritor::new);
     File entrada = new File("nombres_copia.txt");
-    File temp1 = File.createTempFile("MezclaNatual", "temp");
-    File temp2 = File.createTempFile("MezclaNatual", "temp");
     ordernamiento.verificarOrdenamiento(entrada);
-    ordernamiento.ordenar(entrada, temp1, temp2);
+    ordernamiento.ordenar(entrada);
     ordernamiento.verificarOrdenamiento(entrada);
-    temp1.delete();
-    temp2.delete();
   }
 }

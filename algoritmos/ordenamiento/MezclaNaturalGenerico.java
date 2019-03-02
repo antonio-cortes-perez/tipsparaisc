@@ -272,13 +272,21 @@ public class MezclaNaturalGenerico<T extends Comparable<T>> {
   }
 
   /** Ordena entrada usando temp1 and temp2 como almacenamiento auxiliar. */
-  public void ordenar(File entrada, File temp1, File temp2) {
+  public void ordenar(File entrada) throws IOException {
     int index = 0;
-    while (particion(entrada, temp1, temp2)) {
-      // Imprime el numero de particiones-fusiones que le llevo a los
-      // metodos de particion y fusion el ordenar el archivo
-      System.out.println("Fusion " + ++index);
-      fusion(entrada, temp1, temp2);
+    File temp1 = null, temp2 = null;
+    try {
+      temp1 = File.createTempFile("MezclaNatual", "temp");
+      temp2 = File.createTempFile("MezclaNatual", "temp");
+      while (particion(entrada, temp1, temp2)) {
+        // Imprime el numero de particiones-fusiones que le llevo a los
+        // metodos de particion y fusion el ordenar el archivo
+        System.out.println("Fusion " + ++index);
+        fusion(entrada, temp1, temp2);
+      }
+    } finally {
+      if (temp1 != null) temp1.delete();
+      if (temp2 != null) temp2.delete();
     }
   }
 
