@@ -27,6 +27,9 @@ import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Random;
 
+/**
+ * https://tipsparaisc.blogspot.com/2019/03/ordenamiento-mezcla-natural-objetos.html
+ */
 public class MezclaNaturalEjemplo4 {
 
   public static class Persona implements Serializable, Comparable<Persona> {

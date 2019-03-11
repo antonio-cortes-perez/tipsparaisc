@@ -24,7 +24,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * https://tipsparaisc.blogspot.com/2010/12/ordenamiento-externo-mezcla-natural.html
+ * https://tipsparaisc.blogspot.com/2019/02/ordenamiento-mezcla-natural-generico.html
  */
 public class MezclaNaturalGenerico<T extends Comparable<T>> {
   public interface Lector<T> extends Iterator<T>, Closeable { }

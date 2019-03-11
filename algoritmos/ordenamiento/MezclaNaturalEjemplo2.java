@@ -24,6 +24,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
+/**
+ * https://tipsparaisc.blogspot.com/2019/03/ordenamiento-mezcla-natural-cadenas.html
+ */
 public class MezclaNaturalEjemplo2 {
 
   public static class Lector implements MezclaNaturalGenerico.Lector<String> {

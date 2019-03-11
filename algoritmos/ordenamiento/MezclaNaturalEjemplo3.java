@@ -24,6 +24,9 @@ import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.util.Random;
 
+/**
+ * https://tipsparaisc.blogspot.com/2019/03/ordenamiento-mezcla-natural-enteros.html
+ */
 public class MezclaNaturalEjemplo3 {
 
   public static class Lector

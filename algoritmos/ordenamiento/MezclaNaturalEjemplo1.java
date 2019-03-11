@@ -23,6 +23,9 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 
+/**
+ * https://tipsparaisc.blogspot.com/2019/02/ordenamiento-mezcla-natural-cadenas.html
+ */
 public class MezclaNaturalEjemplo1 {
 
   public static class Lector implements MezclaNaturalGenerico.Lector<String> {
